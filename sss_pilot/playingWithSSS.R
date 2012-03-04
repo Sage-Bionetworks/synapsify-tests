@@ -90,7 +90,14 @@ colnames(dfHER2) <- c("predictions", "trueStat")
 dfHER2 <- as.data.frame(dfHER2)
 
 her2Box <- ggplot(dfHER2, aes(as.factor(trueStat), predictions)) + 
-  geom_boxplot()
+  geom_boxplot() + geom_jitter(aes(colour = as.factor(trueStat)))
+
+her2Box <- her2Box + geom_hline(yintercept = optCut, colour = "red",
+                                linetype = 2)
+                                  
+
+rankSum <- wilcox.test(validVec, validHER2)
+# p-value < 2.2e-16
 
 ## CREATE A ROC CURVE USING GGPLOT
 dfPerf <- as.data.frame(cbind(unlist(her2Perf@x.values),
