@@ -3,6 +3,12 @@
 require(randomForest)
 require(sss)
 require(illuminaHumanv4.db)
+require(synapseClient)
+require(Biobase)
+require(ROCR)
+require(ggplot2)
+
+synapseLogin()
 
 ## PULL IN THE HER2 RANDOM FOREST MODEL OBJECT
 her2ModEnt <- loadEntity(138541)
@@ -18,7 +24,8 @@ topInd <- grep("TRUE", topFeatLog)
 topHER2Features <- sortHER2Features[topInd]
 
 ## MAPPING ILLUMINA FEATURES TO GENE SYMBOLS
-her2GSym <- as.character(mget(names(topHER2Features), illuminaHumanv4SYMBOL, ifnotfound = NA))
+her2GSym <- as.character(mget(names(topHER2Features), illuminaHumanv4SYMBOL, 
+                              ifnotfound = NA))
 
 ## FOR DEMO PURPOSES, LET'S SELECT THE TOP 500 FEATURES
 topFH <- names(topHER2Features)[1:500]
@@ -53,5 +60,38 @@ tValid <- t(validExpress)
 her2Assign <- ifelse(sortClinDat$HER2_SNP6_state == "GAIN", 1, 0)
 trainHER2 <- her2Assign[randVec == 0]
 validHER2 <- her2Assign[randVec == 1]
+
+## LET'S MODEL WITH JUST TRAINING AND USE THE PREDICT METHOD
+## ON A HELD OUT VALIDATION SET
+
+sssFit <- sss(trainHER2 ~ tTrain)
+validVec <- predict(sssFit, newdata = tValid)
+
+## EVALUATE MODEL PERFORMANCE
+her2Pred <- prediction(validVec, validHER2)
+her2Perf <- performance(her2Pred, "tpr", "fpr")
+her2AUC <- performance(her2Pred, "auc")
+
+## CREATE A BOXPLOT USING GGPLOT
+dfHER2 <- cbind(validVec, validHER2)
+colnames(dfHER2) <- c("predictions", "trueStat")
+dfHER2 <- as.data.frame(dfHER2)
+
+her2Box <- ggplot(dfHER2, aes(as.factor(trueStat), predictions)) + 
+  geom_boxplot()
+
+## CREATE A ROC CURVE USING GGPLOT
+dfPerf <- as.data.frame(cbind(unlist(her2Perf@x.values),
+                              unlist(her2Perf@y.values)))
+colnames(dfPerf) <- c("FalsePositiveRate", "TruePositiveRate")
+
+her2ROC <- ggplot(dfPerf, aes(FalsePositiveRate, TruePositiveRate)) +
+  geom_line()
+her2ROC <- her2ROC + geom_abline(slope = 1, colour = "red")
+
+
+
+# ## LET'S PUSH IN THE FULL MATRIX AND SEE WHAT WE GET
+# sssFullFit <- sss(her2Assign ~ t(exprs(sortExprsDat)[topFH, ]), training = randVec)
 
 
