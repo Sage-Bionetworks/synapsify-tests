@@ -72,6 +72,18 @@ her2Pred <- prediction(validVec, validHER2)
 her2Perf <- performance(her2Pred, "tpr", "fpr")
 her2AUC <- performance(her2Pred, "auc")
 
+## FIND YOUDEN'S J POINT AND OPTIMAL SENSITIVITY AND SPECIFICITY
+her2SSPerf <- performance(her2Pred, "sens", "spec")
+youdensJ <- her2SSPerf@x.values[[1]] + her2SSPerf@y.values[[1]] - 1
+jMax <- which.max(youdensJ)
+optCut <- her2Perf@alpha.values[[1]][jMax]
+
+optSens <- unlist(her2SSPerf@x.values)[jMax]
+optSpec <- unlist(her2SSPerf@y.values)[jMax]
+
+# Sensitivity at Youden's J-point = 0.89
+# Specificity at Youden's J-point = 0.85
+
 ## CREATE A BOXPLOT USING GGPLOT
 dfHER2 <- cbind(validVec, validHER2)
 colnames(dfHER2) <- c("predictions", "trueStat")
@@ -89,9 +101,10 @@ her2ROC <- ggplot(dfPerf, aes(FalsePositiveRate, TruePositiveRate)) +
   geom_line()
 her2ROC <- her2ROC + geom_abline(slope = 1, colour = "red")
 
-
+# AUROC = 0.944
 
 # ## LET'S PUSH IN THE FULL MATRIX AND SEE WHAT WE GET
-# sssFullFit <- sss(her2Assign ~ t(exprs(sortExprsDat)[topFH, ]), training = randVec)
+# sssFullFit <- sss(her2Assign ~ t(exprs(sortExprsDat)[topFH, ]), 
+# training = randVec)
 
 
