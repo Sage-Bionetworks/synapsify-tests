@@ -41,6 +41,8 @@ exEstrogen <- exprs(estrogen)
 ## Let's build a model on the 10h samples and validate on the 48h samples
 validSet <- t(exEstrogen[ , 1:4]) # Note that the matrix is transposed
 trainSet <- t(exEstrogen[ , 5:8])
+
+# Recode the 'A'bsence or 'P'resence of estrogen with a numerical indicator
 validPheno <- ifelse(exDesign$ES[1:4] == "P", 1, 0)
 trainPheno <- ifelse(exDesign$ES[5:8] == "P", 1, 0)
 
@@ -51,6 +53,7 @@ sssFit <- sss(trainPheno ~ trainSet, iters = 5000, nbest = 200)
 trainPhenoHat <- predict(sssFit, newdata = trainSet)
 
 # Look at the correlation of 'trainPheno' and 'trainPhenoHat'
+qplot(trainPheno, trainPhenoHat)
 trainRho <- cor(trainPheno, trainPhenoHat)
 # > trainRho^2 = 0.978748
 
@@ -58,6 +61,7 @@ trainRho <- cor(trainPheno, trainPhenoHat)
 validPhenoHat <- predict(sssFit, newdata = validSet)
 
 # Look at the correlation of 'validPheno' and 'validPhenoHat'
+qplot(validPheno, validPhenoHat)
 validRho <- cor(validPheno, validPhenoHat)
 # > validRho^2 = 0.9531309
 
