@@ -14,6 +14,7 @@ require(Biobase)
 require(factDesign) # A Bioconductor package
 require(sss)
 require(hgu95av2.db)
+require(ggplot2)
 
 ## Bring in the 'Estrogen' dataset from the 'factDesign' package
 data(estrogen)
@@ -51,17 +52,20 @@ trainPhenoHat <- predict(sssFit, newdata = trainSet)
 
 # Look at the correlation of 'trainPheno' and 'trainPhenoHat'
 trainRho <- cor(trainPheno, trainPhenoHat)
-# > trainRho^2 = 0.9928368
+# > trainRho^2 = 0.978748
 
 # Look at the validation set
 validPhenoHat <- predict(sssFit, newdata = validSet)
 
 # Look at the correlation of 'validPheno' and 'validPhenoHat'
 validRho <- cor(validPheno, validPhenoHat)
-# > validRho^2 = 0.9664588
+# > validRho^2 = 0.9531309
 
 ## Let's look at the features and their posterior marginal probabilities
 sPMP <- sort(sssFit@postMargProb, decreasing = TRUE)
+
+# Look at the histogram of posterior marginal probabilities
+qplot(sPMP, geom = "histogram")
 
 ## Mapping the HGU95 features to Gene Symbols
 topEstrogenSYMs <- as.character(mget(names(sPMP[1:179]), hgu95av2SYMBOL, 
