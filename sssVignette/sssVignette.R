@@ -63,6 +63,6 @@ validRho <- cor(validPheno, validPhenoHat)
 ## Let's look at the features and their posterior marginal probabilities
 sPMP <- sort(sssFit@postMargProb, decreasing = TRUE)
 
-## MAPPING ILLUMINA FEATURES TO GENE SYMBOLS
-topEstrogenSYMs <- as.character(mget(names(sPMP[1:10]), hgu95av2SYMBOL, 
+## Mapping the HGU95 features to Gene Symbols
+topEstrogenSYMs <- as.character(mget(names(sPMP[1:179]), hgu95av2SYMBOL, 
                               ifnotfound = NA))
