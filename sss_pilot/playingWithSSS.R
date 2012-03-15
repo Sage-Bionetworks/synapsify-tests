@@ -119,8 +119,72 @@ her2ROC <- her2ROC + geom_abline(slope = 1, colour = "red")
 
 # AUROC = 0.944
 
-# ## LET'S PUSH IN THE FULL MATRIX AND SEE WHAT WE GET
-# sssFullFit <- sss(her2Assign ~ t(exprs(sortExprsDat)[topFH, ]), 
-# training = randVec)
+## LET'S INSPECT HIGHLY WEIGHTED FEATURES
+her2PMP <- sssFit@postMargProb
+pmpHist <- qplot(her2PMP, geom = "histogram")
+
+## TOP FEAURES BY SSS
+highPMP <- as.character(mget(names(her2PMP[1:5]), illuminaHumanv4SYMBOL, 
+                             ifnotfound = NA))
+
+# [1] "ERBB2"  "AQP9"   "ORMDL3" "STARD3" "CASC3"
+
+# So naturally the Illumina probe that is most predictive is HER2 (ERBB2)
+# itself.
+
+## LET'S BUILD THE MODEL WITHOUT ERBB2
+sssNewFit <- sss(trainHER2 ~ tTrain[ , 2:dim(tTrain)[2]])
+newValidVec <- predict(sssNewFit, newdata = tValid[ , 2:dim(tValid)[2]])
+
+## EVALUATE MODEL PERFORMANCE
+her2NewPred <- prediction(newValidVec, validHER2)
+her2NewPerf <- performance(her2NewPred, "tpr", "fpr")
+her2NewAUC <- performance(her2NewPred, "auc")
+
+## FIND YOUDEN'S J POINT AND OPTIMAL SENSITIVITY AND SPECIFICITY
+her2NewSSPerf <- performance(her2NewPred, "sens", "spec")
+newYoudensJ <- her2NewSSPerf@x.values[[1]] + her2NewSSPerf@y.values[[1]] - 1
+newJMax <- which.max(newYoudensJ)
+newOptCut <- her2NewPerf@alpha.values[[1]][jMax]
+
+newOptSens <- unlist(her2NewSSPerf@x.values)[newJMax]
+newOptSpec <- unlist(her2NewSSPerf@y.values)[newJMax]
+
+# Sensitivity at Youden's J-point = 0.86
+# Specificity at Youden's J-point = 0.94
+
+## CREATE A BOXPLOT USING GGPLOT
+dfHER2New <- cbind(newValidVec, validHER2)
+colnames(dfHER2New) <- c("predictions", "trueStat")
+dfHER2New <- as.data.frame(dfHER2New)
+
+her2NewBox <- ggplot(dfHER2New, aes(as.factor(trueStat), predictions)) + 
+  geom_boxplot() + geom_jitter(aes(colour = as.factor(trueStat)))
+
+her2NewBox <- her2NewBox + geom_hline(yintercept = optCut, colour = "red",
+                                linetype = 2)
+
+
+newRankSum <- wilcox.test(newValidVec, validHER2)
+# p-value < 2.2e-16
+
+## CREATE A ROC CURVE USING GGPLOT
+newDfPerf <- as.data.frame(cbind(unlist(her2NewPerf@x.values),
+                              unlist(her2NewPerf@y.values)))
+colnames(newDfPerf) <- c("FalsePositiveRate", "TruePositiveRate")
+
+her2NewROC <- ggplot(newDfPerf, aes(FalsePositiveRate, TruePositiveRate)) +
+  geom_line()
+her2NewROC <- her2NewROC + geom_abline(slope = 1, colour = "red")
+
+# AUROC = 0.95
+
+## LET'S INSPECT HIGHLY WEIGHTED FEATURES
+her2NewPMP <- sssNewFit@postMargProb
+pmpNewHist <- qplot(her2NewPMP, geom = "histogram")
+
+## TOP FEAURES BY SSS
+newHighPMP <- as.character(mget(names(her2NewPMP[1:5]), illuminaHumanv4SYMBOL, 
+                             ifnotfound = NA))
 
 
