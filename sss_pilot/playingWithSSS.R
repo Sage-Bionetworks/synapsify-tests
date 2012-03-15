@@ -187,4 +187,4 @@ pmpNewHist <- qplot(her2NewPMP, geom = "histogram")
 newHighPMP <- as.character(mget(names(her2NewPMP[1:5]), illuminaHumanv4SYMBOL, 
                              ifnotfound = NA))
 
-
+# [1] "STARD3" "GRB7"   "HIBCH"  "AQPEP"  "SERGEF"
